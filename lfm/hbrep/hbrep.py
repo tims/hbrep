@@ -7,6 +7,8 @@ import skytools, skytools._pyquoting
 from bootstrap import HBaseBootstrap
 from HBaseConsumer import HBaseConsumer
 
+ini = "hbrep.ini"
+
 command_usage = """
 %prog [options] inifile command [tablenames]
 
@@ -16,6 +18,10 @@ commands:
   install       Setup the pgq queue, and install trigger on each table.
   uninstall     Remove the triggers from each specified table.
 """
+
+#def main(*args, **kwargs):
+#    script = HBaseConsumer(service_name, [ini] + self.table_names)
+#    script.start
 
 class HBaseReplic(skytools.DBScript):
   def __init__(self, service_name, args):

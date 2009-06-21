@@ -14,8 +14,8 @@ DELETE = 'D'
 class HBaseConsumer(pgq.Consumer):
   """HBaseConsumer is a pgq.Consumer that sends processed events to hbase as mutations."""
   
-  def __init__(self, service_name, args):
-    pgq.Consumer.__init__(self, service_name, "postgresql_db", args)
+  def __init__(self, servicename, args):
+    pgq.Consumer.__init__(self, servicename, "db", args)
     
     config_file = self.args[0]
     if len(self.args) < 2:
