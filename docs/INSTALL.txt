@@ -1,0 +1,16 @@
+To install this package, run:
+
+    python setup.py install
+
+Note that this requires python-setuptools to be installed:
+
+    apt-get install python-setuptools
+
+
+Generating an egg can be done as follows:
+
+    python setup.py bdist_egg
+
+and this egg might be executable:
+
+    sh dist/*.egg
