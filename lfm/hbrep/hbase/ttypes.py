@@ -14,54 +14,123 @@ except:
   fastbinary = None
 
 
+class TCell:
+  """
+  TCell - Used to transport a cell value (byte[]) and the timestamp it was
+  stored with together as a result for get and getRow methods. This promotes
+  the timestamp of a cell to a first-class value, making it easy to take
+  note of temporal data. Cell is used all the way from HStore up to HTable.
+  
+  Attributes:
+   - value
+   - timestamp
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'value', None, None, ), # 1
+    (2, TType.I64, 'timestamp', None, None, ), # 2
+  )
+
+  def __init__(self, value=None, timestamp=None,):
+    self.value = value
+    self.timestamp = timestamp
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.value = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.timestamp = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('TCell')
+    if self.value != None:
+      oprot.writeFieldBegin('value', TType.STRING, 1)
+      oprot.writeString(self.value)
+      oprot.writeFieldEnd()
+    if self.timestamp != None:
+      oprot.writeFieldBegin('timestamp', TType.I64, 2)
+      oprot.writeI64(self.timestamp)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class ColumnDescriptor:
+  """
+  An HColumnDescriptor contains information about a column family
+  such as the number of versions, compression settings, etc. It is
+  used as input when creating a table or adding a column.
+  
+  Attributes:
+   - name
+   - maxVersions
+   - compression
+   - inMemory
+   - maxValueLength
+   - bloomFilterType
+   - bloomFilterVectorSize
+   - bloomFilterNbHashes
+   - blockCacheEnabled
+   - timeToLive
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.I32, 'maxVersions', None, None, ), # 2
-    (3, TType.STRING, 'compression', None, None, ), # 3
-    (4, TType.BOOL, 'inMemory', None, None, ), # 4
-    (5, TType.I32, 'maxValueLength', None, None, ), # 5
-    (6, TType.STRING, 'bloomFilterType', None, None, ), # 6
-    (7, TType.I32, 'bloomFilterVectorSize', None, None, ), # 7
-    (8, TType.I32, 'bloomFilterNbHashes', None, None, ), # 8
-    (9, TType.BOOL, 'blockCacheEnabled', None, None, ), # 9
-    (10, TType.I32, 'timeToLive', None, None, ), # 10
+    (2, TType.I32, 'maxVersions', None, 3, ), # 2
+    (3, TType.STRING, 'compression', None, "NONE", ), # 3
+    (4, TType.BOOL, 'inMemory', None, False, ), # 4
+    (5, TType.I32, 'maxValueLength', None, 2147483647, ), # 5
+    (6, TType.STRING, 'bloomFilterType', None, "NONE", ), # 6
+    (7, TType.I32, 'bloomFilterVectorSize', None, 0, ), # 7
+    (8, TType.I32, 'bloomFilterNbHashes', None, 0, ), # 8
+    (9, TType.BOOL, 'blockCacheEnabled', None, False, ), # 9
+    (10, TType.I32, 'timeToLive', None, -1, ), # 10
   )
 
-  def __init__(self, d=None):
-    self.name = None
-    self.maxVersions = 3
-    self.compression = 'NONE'
-    self.inMemory = False
-    self.maxValueLength = 2147483647
-    self.bloomFilterType = 'NONE'
-    self.bloomFilterVectorSize = 0
-    self.bloomFilterNbHashes = 0
-    self.blockCacheEnabled = False
-    self.timeToLive = -1
-    if isinstance(d, dict):
-      if 'name' in d:
-        self.name = d['name']
-      if 'maxVersions' in d:
-        self.maxVersions = d['maxVersions']
-      if 'compression' in d:
-        self.compression = d['compression']
-      if 'inMemory' in d:
-        self.inMemory = d['inMemory']
-      if 'maxValueLength' in d:
-        self.maxValueLength = d['maxValueLength']
-      if 'bloomFilterType' in d:
-        self.bloomFilterType = d['bloomFilterType']
-      if 'bloomFilterVectorSize' in d:
-        self.bloomFilterVectorSize = d['bloomFilterVectorSize']
-      if 'bloomFilterNbHashes' in d:
-        self.bloomFilterNbHashes = d['bloomFilterNbHashes']
-      if 'blockCacheEnabled' in d:
-        self.blockCacheEnabled = d['blockCacheEnabled']
-      if 'timeToLive' in d:
-        self.timeToLive = d['timeToLive']
+  def __init__(self, name=None, maxVersions=thrift_spec[2][4], compression=thrift_spec[3][4], inMemory=thrift_spec[4][4], maxValueLength=thrift_spec[5][4], bloomFilterType=thrift_spec[6][4], bloomFilterVectorSize=thrift_spec[7][4], bloomFilterNbHashes=thrift_spec[8][4], blockCacheEnabled=thrift_spec[9][4], timeToLive=thrift_spec[10][4],):
+    self.name = name
+    self.maxVersions = maxVersions
+    self.compression = compression
+    self.inMemory = inMemory
+    self.maxValueLength = maxValueLength
+    self.bloomFilterType = bloomFilterType
+    self.bloomFilterVectorSize = bloomFilterVectorSize
+    self.bloomFilterNbHashes = bloomFilterNbHashes
+    self.blockCacheEnabled = blockCacheEnabled
+    self.timeToLive = timeToLive
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -175,11 +244,10 @@ class ColumnDescriptor:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -187,18 +255,33 @@ class ColumnDescriptor:
   def __ne__(self, other):
     return not (self == other)
 
-class RegionDescriptor:
+class TRegionInfo:
+  """
+  A TRegionInfo contains information about an HTable region.
+  
+  Attributes:
+   - startKey
+   - endKey
+   - id
+   - name
+   - version
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'startKey', None, None, ), # 1
+    (2, TType.STRING, 'endKey', None, None, ), # 2
+    (3, TType.I64, 'id', None, None, ), # 3
+    (4, TType.STRING, 'name', None, None, ), # 4
+    (5, TType.BYTE, 'version', None, None, ), # 5
   )
 
-  def __init__(self, d=None):
-    self.startKey = None
-    if isinstance(d, dict):
-      if 'startKey' in d:
-        self.startKey = d['startKey']
+  def __init__(self, startKey=None, endKey=None, id=None, name=None, version=None,):
+    self.startKey = startKey
+    self.endKey = endKey
+    self.id = id
+    self.name = name
+    self.version = version
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -214,6 +297,26 @@ class RegionDescriptor:
           self.startKey = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.endKey = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.BYTE:
+          self.version = iprot.readByte();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -223,19 +326,34 @@ class RegionDescriptor:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('RegionDescriptor')
+    oprot.writeStructBegin('TRegionInfo')
     if self.startKey != None:
       oprot.writeFieldBegin('startKey', TType.STRING, 1)
       oprot.writeString(self.startKey)
       oprot.writeFieldEnd()
+    if self.endKey != None:
+      oprot.writeFieldBegin('endKey', TType.STRING, 2)
+      oprot.writeString(self.endKey)
+      oprot.writeFieldEnd()
+    if self.id != None:
+      oprot.writeFieldBegin('id', TType.I64, 3)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
+    if self.name != None:
+      oprot.writeFieldBegin('name', TType.STRING, 4)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    if self.version != None:
+      oprot.writeFieldBegin('version', TType.BYTE, 5)
+      oprot.writeByte(self.version)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -244,25 +362,26 @@ class RegionDescriptor:
     return not (self == other)
 
 class Mutation:
+  """
+  A Mutation object is used to either update or delete a column-value.
+  
+  Attributes:
+   - isDelete
+   - column
+   - value
+  """
 
   thrift_spec = (
     None, # 0
-    (1, TType.BOOL, 'isDelete', None, None, ), # 1
+    (1, TType.BOOL, 'isDelete', None, False, ), # 1
     (2, TType.STRING, 'column', None, None, ), # 2
     (3, TType.STRING, 'value', None, None, ), # 3
   )
 
-  def __init__(self, d=None):
-    self.isDelete = False
-    self.column = None
-    self.value = None
-    if isinstance(d, dict):
-      if 'isDelete' in d:
-        self.isDelete = d['isDelete']
-      if 'column' in d:
-        self.column = d['column']
-      if 'value' in d:
-        self.value = d['value']
+  def __init__(self, isDelete=thrift_spec[1][4], column=None, value=None,):
+    self.isDelete = isDelete
+    self.column = column
+    self.value = value
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -313,11 +432,10 @@ class Mutation:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -326,6 +444,13 @@ class Mutation:
     return not (self == other)
 
 class BatchMutation:
+  """
+  A BatchMutation object is used to apply a number of Mutations to a single row.
+  
+  Attributes:
+   - row
+   - mutations
+  """
 
   thrift_spec = (
     None, # 0
@@ -333,14 +458,9 @@ class BatchMutation:
     (2, TType.LIST, 'mutations', (TType.STRUCT,(Mutation, Mutation.thrift_spec)), None, ), # 2
   )
 
-  def __init__(self, d=None):
-    self.row = None
-    self.mutations = None
-    if isinstance(d, dict):
-      if 'row' in d:
-        self.row = d['row']
-      if 'mutations' in d:
-        self.mutations = d['mutations']
+  def __init__(self, row=None, mutations=None,):
+    self.row = row
+    self.mutations = mutations
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -391,11 +511,10 @@ class BatchMutation:
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -403,22 +522,24 @@ class BatchMutation:
   def __ne__(self, other):
     return not (self == other)
 
-class ScanEntry:
+class TRowResult:
+  """
+  Holds row name and then a map of columns to cells.
+  
+  Attributes:
+   - row
+   - columns
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'row', None, None, ), # 1
-    (2, TType.MAP, 'columns', (TType.STRING,None,TType.STRING,None), None, ), # 2
+    (2, TType.MAP, 'columns', (TType.STRING,None,TType.STRUCT,(TCell, TCell.thrift_spec)), None, ), # 2
   )
 
-  def __init__(self, d=None):
-    self.row = None
-    self.columns = None
-    if isinstance(d, dict):
-      if 'row' in d:
-        self.row = d['row']
-      if 'columns' in d:
-        self.columns = d['columns']
+  def __init__(self, row=None, columns=None,):
+    self.row = row
+    self.columns = columns
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -440,7 +561,8 @@ class ScanEntry:
           (_ktype8, _vtype9, _size7 ) = iprot.readMapBegin() 
           for _i11 in xrange(_size7):
             _key12 = iprot.readString();
-            _val13 = iprot.readString();
+            _val13 = TCell()
+            _val13.read(iprot)
             self.columns[_key12] = _val13
           iprot.readMapEnd()
         else:
@@ -454,27 +576,26 @@ class ScanEntry:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('ScanEntry')
+    oprot.writeStructBegin('TRowResult')
     if self.row != None:
       oprot.writeFieldBegin('row', TType.STRING, 1)
       oprot.writeString(self.row)
       oprot.writeFieldEnd()
     if self.columns != None:
       oprot.writeFieldBegin('columns', TType.MAP, 2)
-      oprot.writeMapBegin(TType.STRING, TType.STRING, len(self.columns))
+      oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.columns))
       for kiter14,viter15 in self.columns.items():
         oprot.writeString(kiter14)
-        oprot.writeString(viter15)
+        viter15.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -483,17 +604,22 @@ class ScanEntry:
     return not (self == other)
 
 class IOError(Exception):
+  """
+  An IOError exception signals that an error occurred communicating
+  to the Hbase master or an Hbase region server.  Also used to return
+  more general Hbase error conditions.
+  
+  Attributes:
+   - message
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'message', None, None, ), # 1
   )
 
-  def __init__(self, d=None):
-    self.message = None
-    if isinstance(d, dict):
-      if 'message' in d:
-        self.message = d['message']
+  def __init__(self, message=None,):
+    self.message = message
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -526,11 +652,10 @@ class IOError(Exception):
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -539,17 +664,21 @@ class IOError(Exception):
     return not (self == other)
 
 class IllegalArgument(Exception):
+  """
+  An IllegalArgument exception indicates an illegal or invalid
+  argument was passed into a procedure.
+  
+  Attributes:
+   - message
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'message', None, None, ), # 1
   )
 
-  def __init__(self, d=None):
-    self.message = None
-    if isinstance(d, dict):
-      if 'message' in d:
-        self.message = d['message']
+  def __init__(self, message=None,):
+    self.message = message
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -582,67 +711,10 @@ class IllegalArgument(Exception):
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class NotFound(Exception):
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.STRING, 'message', None, None, ), # 1
-  )
-
-  def __init__(self, d=None):
-    self.message = None
-    if isinstance(d, dict):
-      if 'message' in d:
-        self.message = d['message']
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.STRING:
-          self.message = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('NotFound')
-    if self.message != None:
-      oprot.writeFieldBegin('message', TType.STRING, 1)
-      oprot.writeString(self.message)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
@@ -651,17 +723,21 @@ class NotFound(Exception):
     return not (self == other)
 
 class AlreadyExists(Exception):
+  """
+  An AlreadyExists exceptions signals that a table with the specified
+  name already exists
+  
+  Attributes:
+   - message
+  """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'message', None, None, ), # 1
   )
 
-  def __init__(self, d=None):
-    self.message = None
-    if isinstance(d, dict):
-      if 'message' in d:
-        self.message = d['message']
+  def __init__(self, message=None,):
+    self.message = message
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -694,11 +770,10 @@ class AlreadyExists(Exception):
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
-  def __str__(self): 
-    return str(self.__dict__)
-
-  def __repr__(self): 
-    return repr(self.__dict__)
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
 
   def __eq__(self, other):
     return isinstance(other, self.__class__) and self.__dict__ == other.__dict__

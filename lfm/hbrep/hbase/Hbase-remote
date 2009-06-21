@@ -21,21 +21,28 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host:port] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
+  print '  void enableTable(Bytes tableName)'
+  print '  void disableTable(Bytes tableName)'
+  print '  bool isTableEnabled(Bytes tableName)'
+  print '  void compact(Bytes tableNameOrRegionName)'
+  print '  void majorCompact(Bytes tableNameOrRegionName)'
   print '   getTableNames()'
   print '   getColumnDescriptors(Text tableName)'
   print '   getTableRegions(Text tableName)'
   print '  void createTable(Text tableName,  columnFamilies)'
   print '  void deleteTable(Text tableName)'
-  print '  Bytes get(Text tableName, Text row, Text column)'
+  print '   get(Text tableName, Text row, Text column)'
   print '   getVer(Text tableName, Text row, Text column, i32 numVersions)'
   print '   getVerTs(Text tableName, Text row, Text column, i64 timestamp, i32 numVersions)'
   print '   getRow(Text tableName, Text row)'
+  print '   getRowWithColumns(Text tableName, Text row,  columns)'
   print '   getRowTs(Text tableName, Text row, i64 timestamp)'
-  print '  void put(Text tableName, Text row, Text column, Bytes value)'
+  print '   getRowWithColumnsTs(Text tableName, Text row,  columns, i64 timestamp)'
   print '  void mutateRow(Text tableName, Text row,  mutations)'
   print '  void mutateRowTs(Text tableName, Text row,  mutations, i64 timestamp)'
   print '  void mutateRows(Text tableName,  rowBatches)'
   print '  void mutateRowsTs(Text tableName,  rowBatches, i64 timestamp)'
+  print '  i64 atomicIncrement(Text tableName, Text row, Text column, i64 value)'
   print '  void deleteAll(Text tableName, Text row, Text column)'
   print '  void deleteAllTs(Text tableName, Text row, Text column, i64 timestamp)'
   print '  void deleteAllRow(Text tableName, Text row)'
@@ -44,7 +51,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  ScannerID scannerOpenWithStop(Text tableName, Text startRow, Text stopRow,  columns)'
   print '  ScannerID scannerOpenTs(Text tableName, Text startRow,  columns, i64 timestamp)'
   print '  ScannerID scannerOpenWithStopTs(Text tableName, Text startRow, Text stopRow,  columns, i64 timestamp)'
-  print '  ScanEntry scannerGet(ScannerID id)'
+  print '   scannerGet(ScannerID id)'
+  print '   scannerGetList(ScannerID id, i32 nbRows)'
   print '  void scannerClose(ScannerID id)'
   print ''
   sys.exit(0)
@@ -94,7 +102,37 @@ protocol = TBinaryProtocol.TBinaryProtocol(transport)
 client = Hbase.Client(protocol)
 transport.open()
 
-if cmd == 'getTableNames':
+if cmd == 'enableTable':
+  if len(args) != 1:
+    print 'enableTable requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.enableTable(eval(args[0]),))
+
+elif cmd == 'disableTable':
+  if len(args) != 1:
+    print 'disableTable requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.disableTable(eval(args[0]),))
+
+elif cmd == 'isTableEnabled':
+  if len(args) != 1:
+    print 'isTableEnabled requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.isTableEnabled(eval(args[0]),))
+
+elif cmd == 'compact':
+  if len(args) != 1:
+    print 'compact requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.compact(eval(args[0]),))
+
+elif cmd == 'majorCompact':
+  if len(args) != 1:
+    print 'majorCompact requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.majorCompact(eval(args[0]),))
+
+elif cmd == 'getTableNames':
   if len(args) != 0:
     print 'getTableNames requires 0 args'
     sys.exit(1)
@@ -148,17 +186,23 @@ elif cmd == 'getRow':
     sys.exit(1)
   pp.pprint(client.getRow(eval(args[0]),eval(args[1]),))
 
+elif cmd == 'getRowWithColumns':
+  if len(args) != 3:
+    print 'getRowWithColumns requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.getRowWithColumns(eval(args[0]),eval(args[1]),eval(args[2]),))
+
 elif cmd == 'getRowTs':
   if len(args) != 3:
     print 'getRowTs requires 3 args'
     sys.exit(1)
   pp.pprint(client.getRowTs(eval(args[0]),eval(args[1]),eval(args[2]),))
 
-elif cmd == 'put':
+elif cmd == 'getRowWithColumnsTs':
   if len(args) != 4:
-    print 'put requires 4 args'
+    print 'getRowWithColumnsTs requires 4 args'
     sys.exit(1)
-  pp.pprint(client.put(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),))
+  pp.pprint(client.getRowWithColumnsTs(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),))
 
 elif cmd == 'mutateRow':
   if len(args) != 3:
@@ -183,6 +227,12 @@ elif cmd == 'mutateRowsTs':
     print 'mutateRowsTs requires 3 args'
     sys.exit(1)
   pp.pprint(client.mutateRowsTs(eval(args[0]),eval(args[1]),eval(args[2]),))
+
+elif cmd == 'atomicIncrement':
+  if len(args) != 4:
+    print 'atomicIncrement requires 4 args'
+    sys.exit(1)
+  pp.pprint(client.atomicIncrement(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),))
 
 elif cmd == 'deleteAll':
   if len(args) != 3:
@@ -237,6 +287,12 @@ elif cmd == 'scannerGet':
     print 'scannerGet requires 1 args'
     sys.exit(1)
   pp.pprint(client.scannerGet(eval(args[0]),))
+
+elif cmd == 'scannerGetList':
+  if len(args) != 2:
+    print 'scannerGetList requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.scannerGetList(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'scannerClose':
   if len(args) != 1:
