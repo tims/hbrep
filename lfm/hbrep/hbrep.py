@@ -44,21 +44,14 @@ class HBaseReplic(skytools.DBScript):
         print "unknown command"
         sys.exit(0)
         
-      if len(self.args) < 3:
-        self.print_usage()
-        print "need table names"
-        sys.exit(0)
-      else:
-        self.table_names = self.args[2:]
-      
       if cmd == "play":
-        self.run_script = HBaseConsumer(service_name, [self.config_file] + self.table_names)
-      elif cmd == "bootstrap":
-        self.run_script = HBaseBootstrap(service_name, [self.config_file] + self.table_names)
-      elif cmd == "install":
-        self.work = self.do_install
-      elif cmd == "uninstall":
-        self.work = self.do_uninstall
+        self.run_script = HBaseConsumer(service_name, self.config_file)
+      #elif cmd == "bootstrap":
+      #  self.run_script = HBaseBootstrap(service_name, [self.config_file] + self.table_names)
+      #elif cmd == "install":
+      #  self.work = self.do_install
+      #elif cmd == "uninstall":
+      #  self.work = self.do_uninstall
         
     except Exception, e:
       sys.exit(e)

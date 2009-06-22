@@ -3,7 +3,7 @@ import sys, os
 import pgq, pgq.producer
 import skytools
 
-from HBaseConnection import *
+from hbaseconnection import *
 import tablemapping
 
 class HBaseBootstrap(skytools.DBScript):

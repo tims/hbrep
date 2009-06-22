@@ -1,10 +1,14 @@
 ---
 public:
     users:
-        id:     rowkey
-        name:   'users:name'
-        email:  'users:email' 
+        table:  stuff
+        row:    id
+        columns:
+            name:   'users:name'
+            email:  'users:email' 
     user_info:
-        user:   rowkey
-        sex:    'users:sex'
-        dob:    'users:dob'
+        table:  stuff
+        row:    user
+        columns:
+            sex:    'users:sex'
+            dob:    'users:dob'
