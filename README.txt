@@ -1,3 +1,6 @@
+oops this is out of date!
+
+
 hbrep is a tool for replicating data from postgresql tables to hbase tables.
 
 Dependancies:
