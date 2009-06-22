@@ -1,3 +1,4 @@
+# example replicating two tables to the same family in hbase.
 ---
 public:
     users:
