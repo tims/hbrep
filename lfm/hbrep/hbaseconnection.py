@@ -9,20 +9,29 @@ from thrift.protocol import TBinaryProtocol
 
 class HBaseConnection:
     def __init__(self, hostname, port):
-        # Make socket
-        self.transport = TSocket.TSocket(hostname, port)
-        # Buffering is critical. Raw sockets are very slow
-        self.transport = TTransport.TBufferedTransport(self.transport)
-        # Wrap in a protocol
-        self.protocol = TBinaryProtocol.TBinaryProtocol(self.transport)
-        # Create a client to use the protocol encoder
-        self.client = Hbase.Client(self.protocol)
+       self.hostname = hostname
+       self.port = port
+       self.transport = None
+       self.protocol = None
+       self.client = None
  
     def connect(self):  
-        self.transport.open()
+        if self.client == None or self.transport == None or not self.transport.isOpen():
+            # Make socket
+            self.transport = TSocket.TSocket(self.hostname, self.port)
+            # Buffering is critical. Raw sockets are very slow
+            self.transport = TTransport.TBufferedTransport(self.transport)
+            # Wrap in a protocol
+            self.protocol = TBinaryProtocol.TBinaryProtocol(self.transport)
+            # Create a client to use the protocol encoder
+            self.client = Hbase.Client(self.protocol)
+            print "Opening hbase connection on %s %s" % (self.hostname, self.port)
+            self.transport.open()
+            print "Opened!"
    
     def disconnect(self):
-        self.transport.close()
+        if self.transport:
+            self.transport.close()
     
     def validate_column_descriptors(self, table_name, column_descriptors):
         hbase_families = self.client.getColumnDescriptors(table_name)
@@ -42,9 +51,14 @@ class HBaseConnection:
         columns = put.columns
         for family in columns:
             for qualifier, value in columns[family].iteritems():
-                column = "%s:%s" % family, qualifier
+                column = "%s:%s" % (family, qualifier)
                 mutations.append(Mutation(column=column, value=value))
-        self.client.mutateRow(table, row, mutations)
+        try:
+            if len(mutations) > 0:
+                self.client.mutateRow(table, put.row, mutations)
+        except IOError, e:
+            raise Exception(e.message)
+            
         
     def delete(self, table, delete):
         if type(delete) != Delete:
@@ -53,11 +67,14 @@ class HBaseConnection:
         columns = delete.columns
         for family in columns:
             for qualifier in columns[family]:
-                column = "%s:%s" % family, qualifier
+                column = "%s:%s" % (family, qualifier)
                 mutations.append(Mutation(column=column, isDelete=True))
-        self.client.mutateRow(table, row, mutations)
-  
-class Put:
+        try:
+            self.client.mutateRow(table, delete.row, mutations)
+        except Exception, e:
+            raise Exception(e.message)
+            
+class Put(object):
     def __init__(self, row):
         self.row = row
         self.columns = {}
@@ -69,7 +86,7 @@ class Put:
         f[qualifier] = value
         self.columns[family] = f
         
-class Delete:
+class Delete(object):
     def __init__(self, row):
         self.row = row
         self.columns = {}

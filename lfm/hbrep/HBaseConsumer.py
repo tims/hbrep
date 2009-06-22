@@ -16,7 +16,7 @@ class HBaseConsumer(pgq.Consumer):
     
         self.mappingsFile = "mappings.yaml"
         self.mappings = yaml.load(file(self.mappingsFile, 'r'))
-      
+        
         #just to check this option exists
         self.cf.get("postgresql_db")
     
@@ -38,7 +38,7 @@ class HBaseConsumer(pgq.Consumer):
                     self.process_event(event, hbase)
                 print "%i events processed" % (i)
             except Exception, e:
-                #self.log.info(e)
+                self.log.info(e)
                 sys.exit(e)
         finally:
             hbase.disconnect()
@@ -55,24 +55,32 @@ class HBaseConsumer(pgq.Consumer):
         
         event_data = skytools.db_urldecode(event.data)
         event_type = event.type.split(':')[0]
-    
-        rowprefix = mapping['hbase'].get('rowprefix', '')
-        row = rowprefix + str(event_data[mapping['row']])
         
+        rowprefix = mapping.get('rowprefix', '')
+        rowcolumn = mapping.get('row', None)
+        if rowcolumn: row = event_data.get(rowcolumn, None)
+        if row:
+            row = rowprefix + row
+        else:
+            raise Exception("row column %s not found" % rowcolumn)
+        hbasetable = mapping['table'] 
         columns = mapping['columns']
+        
         if event_type == INSERT or event_type == UPDATE:
             put = Put(row)
-            for psqlCol, hbaseCol in columns.iteritems:
+            for psqlCol, hbaseCol in columns.iteritems():
                 value = event_data.get(psqlCol, None)
+                family, qualifier = hbaseCol.split(':')
                 if value:
-                    put.add(hbaseCol, value)
-            hbase.put(put)
+                    put.add(family, qualifier, value)
+            hbase.put(hbasetable, put)
         elif event_type == DELETE:
             delete = Delete(row)
-            for psqlCol, hbaseCol in columns.iteritems:
+            for psqlCol, hbaseCol in columns.iteritems():
                 if psqlCol in event_data:
-                    delete.add(hbaseCol)
-            hbase.delete(delete)
+                    family, qualifier = hbaseCol.split(':')
+                    delete.add(family, qualifier)
+            hbase.delete(hbasetable, delete)
         else:
             raise Exception("Invalid event type: %s, event data was: %s" % (event_type, str(event_data)))
         event.tag_done()
