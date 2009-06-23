@@ -74,6 +74,7 @@ class HBaseBootstrap(skytools.DBScript):
          
                 self.log.debug('Starting puts to hbase with batchsize %s' % batchsize)
                 puts = []
+                self.log.info('reading file ' + self.dumpfile)
                 for line in file(self.dumpfile):
                     parts = line.split("\t")
                     row, values = parts[0], parts[1:]
@@ -113,7 +114,9 @@ class HBaseBootstrap(skytools.DBScript):
                 "-f %s" % sqlfile]
         command = "psql " + " ".join(opts)
         print command
-        os.system(command)
+        ret = os.system(command)
+        if ret:
+            raise Exception("psql command failed")
   
 if __name__ == '__main__':
     bootstrap = HBaseBootstrap("HBaseReplic",sys.argv[1:])
