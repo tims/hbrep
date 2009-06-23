@@ -1,7 +1,7 @@
 import sys, os
 
 import pgq, pgq.producer
-import skytools
+import skytools, yaml
 
 from hbaseconnection import *
 import tablemapping
@@ -20,13 +20,12 @@ class HBaseBootstrap(skytools.DBScript):
     else:
       self.table_names = self.args[1:]
     
-    #just to check this option exists
-    self.cf.get("postgresql_db")
-    
+    self.mappingsFile = "mappings.yaml"
+    self.mappings = yaml.load(file(self.mappingsFile, 'r'))
+
     self.max_batch_size = int(self.cf.get("max_batch_size", "10000"))
     self.hbase_hostname = self.cf.get("hbase_hostname", "localhost")
     self.hbase_port = int(self.cf.get("hbase_port", "9090"))
-    self.table_mappings = tablemapping.load_table_mappings(config_file, self.table_names)
   
   def startup(self):
     # make sure the script loops only once.
@@ -42,18 +41,26 @@ class HBaseBootstrap(skytools.DBScript):
       self.log.info("Bootstrapping table %s" % table_name)
       hbase = HBaseConnection(self.hbase_hostname, self.hbase_port)
       try:
-        table_mapping = self.table_mappings[table_name]
-      
+        schema, table = table_name.split('.')
+        mapping = None
+        if schema in self.mappings:
+            mapping = self.mappings[schema].get(table, None)
+        if not mapping:
+            raise Exception("table not specified in mappings file")
+        
         self.log.debug("Connecting to HBase")
-        hbase.connect()
+        #hbase.connect()
         
         # Fetch postgresql cursor
         self.log.debug("Getting postgresql cursor")
         db = self.get_database("postgresql_db")
         curs = db.cursor()
-        
-        hbase.validate_table_name(table_mapping.hbase_table_name)
-        hbase.validate_column_descriptors(table_mapping.hbase_table_name, table_mapping.hbase_column_descriptors)
+      
+        hbaseTable = mapping['table']
+        columns = mapping['columns']
+        row = mapping['row']
+        #hbase.validate_table_name(hbaseTable)
+        #hbase.validate_column_descriptors(hbaseTable, columns.values())
         
         try:
           dump_file = self.cf.get("bootstrap_tmpfile")
@@ -65,19 +72,14 @@ class HBaseBootstrap(skytools.DBScript):
         else:
           row_source = SelectedRows(self.log, curs)
         
-        table_name = table_mapping.psql_schema+"."+table_mapping.psql_table_name
-        # we are careful to make sure that the first column will be the key.
-        column_list = [table_mapping.psql_key_column] + table_mapping.psql_columns
-        
-        # Load the rows either via a select or via a table copy to file. 
-        # Either way, it does not load it all into memory. 
-        # copy is faster, but may incorrectly handle data with tabs in it.
-        row_source.load_rows(table_name, column_list)
+        self.dumpToFile(schema + "." + table, [row] + columns.keys())
         
         # max number of rows to fetch at once
         batch_size = self.max_batch_size
         total_rows = 0L
-          
+         
+        raise Exception("exiting early hehe")
+
         self.log.debug("Starting puts to hbase")
         rows = row_source.get_rows(batch_size)
         while rows != []:
@@ -113,6 +115,28 @@ class HBaseBootstrap(skytools.DBScript):
         m.value = str(value)
         batch.mutations.append(m)
     return batch
+
+  def dumpToFile(self, table, columns):
+    hostname = "localhost"
+    port = 7071
+    username = "lastfm"
+    outputfile = "tmpfile"
+    db = "last"
+    sqlfile = "sqlfile"
+    
+    f = open(sqlfile, 'w')
+    f.write("\pset null NULL; \copy %s(\"%s\") to %s" % (table, "\",\"".join(columns), outputfile))
+    f.close()
+    
+    opts = ["-h %s" % hostname,
+            "-p %s" % port,
+            "-U %s" % username,
+            "-F \\t",
+            "-d %s" % db,
+            "-f %s" % sqlfile]
+    command = "psql " + " ".join(opts)
+    print command
+    os.system(command)
   
   
 ## Helper classes to fetch rows from a select, or from a table dumped by copy
