@@ -47,7 +47,7 @@ class HBaseReplic(skytools.DBScript):
       if cmd == "play":
         self.run_script = HBaseConsumer(service_name, self.config_file)
       elif cmd == "bootstrap":
-        self.run_script = HBaseBootstrap(service_name, [self.config_file] + self.table_names)
+          self.run_script = HBaseBootstrap(service_name, [self.config_file] + args[2:])
       #elif cmd == "install":
       #  self.work = self.do_install
       #elif cmd == "uninstall":
