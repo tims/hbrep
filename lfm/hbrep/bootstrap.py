@@ -48,7 +48,7 @@ class HBaseBootstrap(skytools.DBScript):
         if not mapping:
             raise Exception("table not specified in mappings file")
 
-        #self.dumpPostgres(table, schema, mapping)
+        self.dumpPostgres(table, schema, mapping)
         self.loadHBase(mapping)
 
     def dumpPostgres(self, table, schema, mapping):
