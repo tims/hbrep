@@ -27,7 +27,11 @@ class HBaseBootstrap(skytools.DBScript):
         self.hbase_hostname = self.cf.get("hbase_hostname", "localhost")
         self.hbase_port = int(self.cf.get("hbase_port", "9090"))
         self.dumpfile = self.cf.get("bootstrap_tmpfile", "tmpdump.dat")
-        self.db = self.cf.get("postgresql_db")
+
+        self.psqlHostname = self.cf.get("psql.hostname", localhost)
+        self.psqlPort = self.cf.get("psql.port", 5432)
+        self.psqlUser = self.cf.get("psql.user", None)
+        self.psqlDb = self.cf.get("psql.db", None)
   
     def startup(self):
         # make sure the script loops only once.
@@ -96,10 +100,10 @@ class HBaseBootstrap(skytools.DBScript):
             hbase.disconnect()
   
     def dumpToFile(self, table, columns, outputfile):
-        hostname = "localhost"
-        port = 7071
-        username = "lastfm"
-        db = "last"
+        hostname = self.psqlHostname
+        port = self.psqlPort
+        username = self.psqlUser
+        db = self.psqlDb
         sqlfile = "sqlfile"
     
         f = open(sqlfile, 'w')
