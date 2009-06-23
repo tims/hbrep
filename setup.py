@@ -6,7 +6,7 @@ version = "0.1"
 description = "Postgresql to HBase replication tool."
 maintainer = "Tim Sell"
 executable = False  # requires lfm.name.main()
-requires = ["skytools",'thrift']  # can be left empty
+requires = ["skytools",'thrift','PyYaml']  # can be left empty
 
 
 ###########################################
