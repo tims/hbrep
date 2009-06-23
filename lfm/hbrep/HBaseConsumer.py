@@ -17,9 +17,6 @@ class HBaseConsumer(pgq.Consumer):
         self.mappingsFile = "mappings.yaml"
         self.mappings = yaml.load(file(self.mappingsFile, 'r'))
         
-        #just to check this option exists
-        self.cf.get("postgresql_db")
-    
         self.max_batch_size = int(self.cf.get("max_batch_size", "10000"))
         self.hbase_hostname = self.cf.get("hbase_hostname", "localhost")
         self.hbase_port = int(self.cf.get("hbase_port", "9090"))
@@ -30,6 +27,7 @@ class HBaseConsumer(pgq.Consumer):
             self.log.debug("processing batch %s" % (batch_id))
             hbase = HBaseConnection(self.hbase_hostname, self.hbase_port)
             try:
+                #TODO: use a persistent connection, that restarts if it goes down and we should use for multiple batches.
                 self.log.debug("Connecting to HBase")
                 hbase.connect()
                 i = 0L
@@ -41,6 +39,7 @@ class HBaseConsumer(pgq.Consumer):
                 self.log.info(e)
                 sys.exit(e)
         finally:
+            self.log.debug("Disconnecting from hbase")
             hbase.disconnect()
   
     def process_event(self, event, hbase):
@@ -48,7 +47,7 @@ class HBaseConsumer(pgq.Consumer):
         mapping = None
         if schema in self.mappings:
             mapping = self.mappings[schema].get(table, None)
-        if mapping == None:  
+        if mapping == None:
             self.log.info("table name %s not found in config, skipping event" % event.ev_extra1)
             event.tag_done()
             return
@@ -63,7 +62,7 @@ class HBaseConsumer(pgq.Consumer):
             row = rowprefix + row
         else:
             raise Exception("row column %s not found" % rowcolumn)
-        hbasetable = mapping['table'] 
+        hbasetable = mapping['table']
         columns = mapping['columns']
         
         if event_type == INSERT or event_type == UPDATE:
