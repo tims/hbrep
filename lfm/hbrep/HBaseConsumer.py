@@ -72,14 +72,14 @@ class HBaseConsumer(pgq.Consumer):
                 family, qualifier = hbaseCol.split(':')
                 if value:
                     put.add(family, qualifier, value)
-            hbase.put(hbasetable, put)
+            hbase.put(hbasetable, [put])
         elif event_type == DELETE:
             delete = Delete(row)
             for psqlCol, hbaseCol in columns.iteritems():
                 if psqlCol in event_data:
                     family, qualifier = hbaseCol.split(':')
                     delete.add(family, qualifier)
-            hbase.delete(hbasetable, delete)
+            hbase.delete(hbasetable, [delete])
         else:
             raise Exception("Invalid event type: %s, event data was: %s" % (event_type, str(event_data)))
         event.tag_done()

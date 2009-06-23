@@ -44,35 +44,40 @@ class HBaseConnection:
         if not table_name in self.client.getTableNames():
             raise Exception("hbase table '%s' not found." % (table_name))
         
-    def put(self, table, put):
-        if type(put) != Put:
-            raise Exception("not put type");
-        mutations = []
-        columns = put.columns
-        for family in columns:
-            for qualifier, value in columns[family].iteritems():
-                column = "%s:%s" % (family, qualifier)
-                mutations.append(Mutation(column=column, value=value))
-        try:
+    def put(self, table, puts):
+        batches = []
+        for put in puts:
+            mutations = []
+            columns = put.columns
+            for family in columns:
+                for qualifier, value in columns[family].iteritems():
+                    column = "%s:%s" % (family, qualifier)
+                    mutations.append(Mutation(column=column, value=value))
             if len(mutations) > 0:
-                self.client.mutateRow(table, put.row, mutations)
-        except IOError, e:
-            raise Exception(e.message)
+                batches.append(BatchMutation(row=put.row, mutations=mutations))
+        if len(batches) > 0:
+            try:
+                self.client.mutateRows(table, batches)
+            except IOError, e:
+                raise Exception(e.message)
             
         
-    def delete(self, table, delete):
-        if type(delete) != Delete:
-            raise Exception("not delete type");
-        mutations = []
-        columns = delete.columns
-        for family in columns:
-            for qualifier in columns[family]:
-                column = "%s:%s" % (family, qualifier)
-                mutations.append(Mutation(column=column, isDelete=True))
-        try:
-            self.client.mutateRow(table, delete.row, mutations)
-        except Exception, e:
-            raise Exception(e.message)
+    def delete(self, table, deletes):
+        batches = []
+        for delete in deletes:
+            mutations = []
+            columns = delete.columns
+            for family in columns:
+                for qualifier in columns[family]:
+                    column = "%s:%s" % (family, qualifier)
+                    mutations.append(Mutation(column=column, isDelete=True))
+            if len(mutations) > 0:
+                batches.append(BatchMutation(row=put.row, mutations=mutations))
+        if len(batches) > 0:
+            try:
+                self.client.mutateRows(table, batches)
+            except Exception, e:
+                raise Exception(e.message)
             
 class Put(object):
     def __init__(self, row):
