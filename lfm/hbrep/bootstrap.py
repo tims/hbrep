@@ -6,6 +6,8 @@ import skytools, yaml
 from hbaseconnection import *
 import tablemapping
 
+NULLVALUE = '-'
+
 class HBaseBootstrap(skytools.DBScript):
     """Bootstrapping script for loading columns from a table in postgresql to hbase."""
   
@@ -85,16 +87,18 @@ class HBaseBootstrap(skytools.DBScript):
                     put = Put(row)
                     for column, value in zip(columns.values(), values):
                         family, qualifier = column.split(':')
-                        put.add(family, qualifier, value)
+                        if value != NULLVALUE:
+                            put.add(family, qualifier, value)
                     puts.append(put)
                     if len(puts) > batchsize:
+                        log.info("putting batch of %s" % len(puts))
                         hbase.put(hbaseTable, puts)
                 if len(puts) > 0:
+                    log.info("putting batch of %s" % len(puts))
                     hbase.put(hbaseTable, puts)
                 self.log.info("total rows put = %d" % (total_rows))
                 self.log.info("Bootstrapping table %s complete" % table_name)
             except Exception, e:
-                #self.log.info(e)
                 sys.exit(e)
         finally:
             hbase.disconnect()
@@ -108,7 +112,7 @@ class HBaseBootstrap(skytools.DBScript):
     
         f = open(sqlfile, 'w')
         f.write("\copy %s(\"%s\") to %s" % (table, "\",\"".join(columns), outputfile))
-        f.write(" with delimiter as '\t' null as '-'")
+        f.write(" with delimiter as '\t' null as '%s'" % NULLVALUE)
         f.close()
     
         opts = ["-h %s" % hostname,
