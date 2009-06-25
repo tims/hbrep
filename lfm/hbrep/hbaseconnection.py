@@ -27,9 +27,9 @@ class HBaseConnection:
             self.client = Hbase.Client(self.protocol)
             print "Opening hbase connection on %s %s" % (self.hostname, self.port)
             self.transport.open()
-            print "Opened!"
    
     def disconnect(self):
+        print "Closing hbase connection"
         if self.transport:
             self.transport.close()
     
