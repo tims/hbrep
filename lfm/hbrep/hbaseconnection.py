@@ -88,7 +88,7 @@ class Put(object):
         self.add(family, qualifier, value)
     def add(self, family, qualifier, value):
         f = self.columns.get(family, {})
-        f[qualifier] = value
+        f[qualifier] = value.encode( "utf-8" )
         self.columns[family] = f
         
 class Delete(object):
