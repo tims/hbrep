@@ -1,13 +1,12 @@
 oops this is out of date!
 
-
 hbrep is a tool for replicating data from postgresql tables to hbase tables.
 
 Dependancies:
  - python 2.4
- - hbase 0.2.0
+ - hbase 0.20
  - skytools 2.1.7
- - postgresql
+ - postgresql 8.x
  
 It has two main functions.
  - bootstrap, which bootstraps all the data from specified columns of a table
@@ -16,13 +15,14 @@ It has two main functions.
 Example usage:
 install triggers:
   ./hbrep.py hbrep.ini install schema1.table1 schema2.table2
-now that future updates are queuing, bootstrap the tables.
-  ./hbrep.py hbrep.ini bootstrap schema1.table1 schema2.table2
-start pgq ticker
+start the queue ticker (it notifies listening consumers of events in the queue)
   pgqadm.py pgq.ini ticker
 play our queue consumer
-  ./hbrep.py hbrep.ini play schema1.table1 schema2.table2
+  ./hbrep.py hbrep.ini play
 
+You can also bootstrap a table
+  ./hbrep.py hbrep.ini bootstrap schema1.table
+This dumps the table to file then loads it to hbase in batches. Although since hbrep uses the thrift api. This is a very slow method of bootstrapping. A better method would be to import using a mapreduce job.
 
 More details follow.
 
@@ -44,15 +44,6 @@ max_batch_size = 10000
 # file to use when copying a table, if omitted a select columns will be done instead.
 bootstrap_tmpfile = tabledump.dat
 
-# For each table mapping, there must be the same number psql_columns as hbase_column_descriptors
-[public.users]
-psql_schema = public
-psql_table_name = users
-psql_key_column = user_id
-psql_columns = dob
-hbase_table_name = stuff
-hbase_column_descriptors = users:dob
-hbase_row_prefix = user_id:
 ####################
 
 Bootstrapping:
