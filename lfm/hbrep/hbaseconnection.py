@@ -72,7 +72,7 @@ class HBaseConnection:
                     column = "%s:%s" % (family, qualifier)
                     mutations.append(Mutation(column=column, isDelete=True))
             if len(mutations) > 0:
-                batches.append(BatchMutation(row=put.row, mutations=mutations))
+                batches.append(BatchMutation(row=delete.row, mutations=mutations))
         if len(batches) > 0:
             try:
                 self.client.mutateRows(table, batches)
@@ -100,7 +100,6 @@ class Delete(object):
         family, qualifier = familyQualifier.split(':')
         self.add(family, qualifier)
     def add(self, family, qualifier):
-        value = unicode(value, 'utf-8')
         f = self.columns.get(family, [])
         f.append(qualifier)
         self.columns[family] = f
