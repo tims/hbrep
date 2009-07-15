@@ -1,4 +1,5 @@
 import sys, os
+import pprint
 
 from hbase.ttypes import *
 from hbase import Hbase
@@ -8,17 +9,17 @@ from thrift.transport import TSocket, TTransport
 from thrift.protocol import TBinaryProtocol
 
 class HBaseConnection:
-    def __init__(self, hostname, port):
-       self.hostname = hostname
-       self.port = port
-       self.transport = None
-       self.protocol = None
-       self.client = None
+    def __init__(self, hostname='localhost', port=9090):
+        self.hostname = hostname
+        self.port = port
+        self.transport = None
+        self.protocol = None
+        self.client = None
  
-    def connect(self):  
+    def connect(self):
         if self.client == None or self.transport == None or not self.transport.isOpen():
             # Make socket
-            self.transport = TSocket.TSocket(self.hostname, self.port)
+            self.transport = TSocket.TSocket(self.hostname, str(self.port))
             # Buffering is critical. Raw sockets are very slow
             self.transport = TTransport.TBufferedTransport(self.transport)
             # Wrap in a protocol
@@ -27,6 +28,7 @@ class HBaseConnection:
             self.client = Hbase.Client(self.protocol)
             print "Opening hbase connection on %s %s" % (self.hostname, self.port)
             self.transport.open()
+            print "Opened"
    
     def disconnect(self):
         print "Closing hbase connection"
@@ -60,11 +62,12 @@ class HBaseConnection:
                 self.client.mutateRows(table, batches)
             except IOError, e:
                 raise Exception(e.message)
-            
         
     def delete(self, table, deletes):
+        print "Bug in thrift server, we can't delete at the moment sorry..."
         batches = []
         for delete in deletes:
+            self.pp.pprint((delete.row, delete.columns))
             mutations = []
             columns = delete.columns
             for family in columns:
@@ -73,11 +76,28 @@ class HBaseConnection:
                     mutations.append(Mutation(column=column, isDelete=True))
             if len(mutations) > 0:
                 batches.append(BatchMutation(row=delete.row, mutations=mutations))
+        #aborting without doing a delete
+        return
         if len(batches) > 0:
             try:
                 self.client.mutateRows(table, batches)
             except Exception, e:
                 raise Exception(e.message)
+ 
+    def get(self, table, get):
+        cols = []
+        columns = get.columns
+        for family in columns:
+            for qualifier in columns[family]:
+                col = "%s:%s" % (family, qualifier)
+                cols.append(col)
+        try:
+            if len(cols) > 0:
+                self.client.get(table, get.row, cols)
+            else:
+                self.client.get(table, get.row)
+        except Exception, e:
+            raise Exception(e.message)
             
 class Put(object):
     def __init__(self, row):
@@ -102,4 +122,17 @@ class Delete(object):
         f = self.columns.get(family, [])
         f.append(qualifier)
         self.columns[family] = f
-    
+
+class Get(object):
+    def __init__(self, row):
+        self.row = row
+        self.columns = {}
+    def add(self, familyQualifier):
+        family, qualifier = familyQualifier.split(':')
+        self.add(family, qualifier)
+    def add(self, family, qualifier):
+        f = self.columns.get(family, [])
+        f.append(qualifier)
+        self.columns[family] = f
+
+
