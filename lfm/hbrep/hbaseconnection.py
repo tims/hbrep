@@ -91,14 +91,24 @@ class HBaseConnection:
             for qualifier in columns[family]:
                 col = "%s:%s" % (family, qualifier)
                 cols.append(col)
+        results = None
         try:
             if len(cols) > 0:
-                self.client.get(table, get.row, cols)
+                results = self.client.get(table, get.row, cols)
             else:
-                self.client.get(table, get.row)
+                results = self.client.getRow(table, get.row)
         except Exception, e:
             raise Exception(e.message)
-            
+        result = None
+        if results:
+            rowresult = results[0]
+            result = Result(rowresult.row)
+            columns = rowresult.columns
+            for column in columns:
+                family, qualifier = column.split(':')
+                result.add(family, qualifier, columns[column].value)
+        return result
+        
 class Put(object):
     def __init__(self, row):
         self.row = row
@@ -134,5 +144,22 @@ class Get(object):
         f = self.columns.get(family, [])
         f.append(qualifier)
         self.columns[family] = f
+
+class Result(object):
+    def __init__(self, row):
+        self.row = row
+        self.columns = {}
+    def add(self, familyQualifier, value):
+        family, qualifier = familyQualifier.split(':')
+        self.add(family, qualifier, value)
+    def add(self, family, qualifier, value):
+        f = self.columns.get(family, {})
+        f[qualifier] = value
+        self.columns[family] = f
+    def get(self, family):
+        return self.columns.get(family, None)
+    def get(self, family, qualifier):
+        family = self.columns.get(family, {})
+        return family.get(qualifier, None)
 
 
