@@ -1,5 +1,4 @@
 import sys, os
-import pprint
 
 from hbase.ttypes import *
 from hbase import Hbase
@@ -67,7 +66,6 @@ class HBaseConnection:
         print "Bug in thrift server, we can't delete at the moment sorry..."
         batches = []
         for delete in deletes:
-            self.pp.pprint((delete.row, delete.columns))
             mutations = []
             columns = delete.columns
             for family in columns:
