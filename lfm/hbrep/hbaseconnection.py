@@ -63,7 +63,6 @@ class HBaseConnection:
                 raise Exception(e.message)
         
     def delete(self, table, deletes):
-        print "Bug in thrift server, we can't delete at the moment sorry..."
         batches = []
         for delete in deletes:
             mutations = []
@@ -74,8 +73,6 @@ class HBaseConnection:
                     mutations.append(Mutation(column=column, isDelete=True))
             if len(mutations) > 0:
                 batches.append(BatchMutation(row=delete.row, mutations=mutations))
-        #aborting without doing a delete
-        return
         if len(batches) > 0:
             try:
                 self.client.mutateRows(table, batches)
