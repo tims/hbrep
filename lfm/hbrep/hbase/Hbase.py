@@ -442,6 +442,23 @@ class Iface:
     """
     pass
 
+  def scannerOpenWithPrefix(self, tableName, startAndPrefix, columns):
+    """
+    Open a scanner for a given prefix.  That is all rows will have the specified
+    prefix. No other rows will be returned.
+    
+    @param tableName name of table
+    @param startAndPrefix the prefix (and thus start row) of the keys you want
+    @param columns the columns you want returned
+    @return scanner id to use with other scanner calls
+    
+    Parameters:
+     - tableName
+     - startAndPrefix
+     - columns
+    """
+    pass
+
   def scannerOpenTs(self, tableName, startRow, columns, timestamp):
     """
     Get a scanner on the current table starting at the specified row and
@@ -1703,6 +1720,50 @@ class Client(Iface):
       raise result.io
     raise TApplicationException(TApplicationException.MISSING_RESULT, "scannerOpenWithStop failed: unknown result");
 
+  def scannerOpenWithPrefix(self, tableName, startAndPrefix, columns):
+    """
+    Open a scanner for a given prefix.  That is all rows will have the specified
+    prefix. No other rows will be returned.
+    
+    @param tableName name of table
+    @param startAndPrefix the prefix (and thus start row) of the keys you want
+    @param columns the columns you want returned
+    @return scanner id to use with other scanner calls
+    
+    Parameters:
+     - tableName
+     - startAndPrefix
+     - columns
+    """
+    self.send_scannerOpenWithPrefix(tableName, startAndPrefix, columns)
+    return self.recv_scannerOpenWithPrefix()
+
+  def send_scannerOpenWithPrefix(self, tableName, startAndPrefix, columns):
+    self._oprot.writeMessageBegin('scannerOpenWithPrefix', TMessageType.CALL, self._seqid)
+    args = scannerOpenWithPrefix_args()
+    args.tableName = tableName
+    args.startAndPrefix = startAndPrefix
+    args.columns = columns
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_scannerOpenWithPrefix(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = scannerOpenWithPrefix_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.io != None:
+      raise result.io
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "scannerOpenWithPrefix failed: unknown result");
+
   def scannerOpenTs(self, tableName, startRow, columns, timestamp):
     """
     Get a scanner on the current table starting at the specified row and
@@ -1973,6 +2034,7 @@ class Processor(Iface, TProcessor):
     self._processMap["deleteAllRowTs"] = Processor.process_deleteAllRowTs
     self._processMap["scannerOpen"] = Processor.process_scannerOpen
     self._processMap["scannerOpenWithStop"] = Processor.process_scannerOpenWithStop
+    self._processMap["scannerOpenWithPrefix"] = Processor.process_scannerOpenWithPrefix
     self._processMap["scannerOpenTs"] = Processor.process_scannerOpenTs
     self._processMap["scannerOpenWithStopTs"] = Processor.process_scannerOpenWithStopTs
     self._processMap["scannerGet"] = Processor.process_scannerGet
@@ -2396,6 +2458,20 @@ class Processor(Iface, TProcessor):
     except IOError, io:
       result.io = io
     oprot.writeMessageBegin("scannerOpenWithStop", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_scannerOpenWithPrefix(self, seqid, iprot, oprot):
+    args = scannerOpenWithPrefix_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = scannerOpenWithPrefix_result()
+    try:
+      result.success = self._handler.scannerOpenWithPrefix(args.tableName, args.startAndPrefix, args.columns)
+    except IOError, io:
+      result.io = io
+    oprot.writeMessageBegin("scannerOpenWithPrefix", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -6542,6 +6618,162 @@ class scannerOpenWithStop_result:
   def __ne__(self, other):
     return not (self == other)
 
+class scannerOpenWithPrefix_args:
+  """
+  Attributes:
+   - tableName
+   - startAndPrefix
+   - columns
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'tableName', None, None, ), # 1
+    (2, TType.STRING, 'startAndPrefix', None, None, ), # 2
+    (3, TType.LIST, 'columns', (TType.STRING,None), None, ), # 3
+  )
+
+  def __init__(self, tableName=None, startAndPrefix=None, columns=None,):
+    self.tableName = tableName
+    self.startAndPrefix = startAndPrefix
+    self.columns = columns
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.tableName = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.startAndPrefix = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.LIST:
+          self.columns = []
+          (_etype154, _size151) = iprot.readListBegin()
+          for _i155 in xrange(_size151):
+            _elem156 = iprot.readString();
+            self.columns.append(_elem156)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('scannerOpenWithPrefix_args')
+    if self.tableName != None:
+      oprot.writeFieldBegin('tableName', TType.STRING, 1)
+      oprot.writeString(self.tableName)
+      oprot.writeFieldEnd()
+    if self.startAndPrefix != None:
+      oprot.writeFieldBegin('startAndPrefix', TType.STRING, 2)
+      oprot.writeString(self.startAndPrefix)
+      oprot.writeFieldEnd()
+    if self.columns != None:
+      oprot.writeFieldBegin('columns', TType.LIST, 3)
+      oprot.writeListBegin(TType.STRING, len(self.columns))
+      for iter157 in self.columns:
+        oprot.writeString(iter157)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class scannerOpenWithPrefix_result:
+  """
+  Attributes:
+   - success
+   - io
+  """
+
+  thrift_spec = (
+    (0, TType.I32, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'io', (IOError, IOError.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, io=None,):
+    self.success = success
+    self.io = io
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.I32:
+          self.success = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.io = IOError()
+          self.io.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('scannerOpenWithPrefix_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.I32, 0)
+      oprot.writeI32(self.success)
+      oprot.writeFieldEnd()
+    if self.io != None:
+      oprot.writeFieldBegin('io', TType.STRUCT, 1)
+      self.io.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class scannerOpenTs_args:
   """
   Attributes:
@@ -6587,10 +6819,10 @@ class scannerOpenTs_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.columns = []
-          (_etype154, _size151) = iprot.readListBegin()
-          for _i155 in xrange(_size151):
-            _elem156 = iprot.readString();
-            self.columns.append(_elem156)
+          (_etype161, _size158) = iprot.readListBegin()
+          for _i162 in xrange(_size158):
+            _elem163 = iprot.readString();
+            self.columns.append(_elem163)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -6620,8 +6852,8 @@ class scannerOpenTs_args:
     if self.columns != None:
       oprot.writeFieldBegin('columns', TType.LIST, 3)
       oprot.writeListBegin(TType.STRING, len(self.columns))
-      for iter157 in self.columns:
-        oprot.writeString(iter157)
+      for iter164 in self.columns:
+        oprot.writeString(iter164)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.timestamp != None:
@@ -6763,10 +6995,10 @@ class scannerOpenWithStopTs_args:
       elif fid == 4:
         if ftype == TType.LIST:
           self.columns = []
-          (_etype161, _size158) = iprot.readListBegin()
-          for _i162 in xrange(_size158):
-            _elem163 = iprot.readString();
-            self.columns.append(_elem163)
+          (_etype168, _size165) = iprot.readListBegin()
+          for _i169 in xrange(_size165):
+            _elem170 = iprot.readString();
+            self.columns.append(_elem170)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -6800,8 +7032,8 @@ class scannerOpenWithStopTs_args:
     if self.columns != None:
       oprot.writeFieldBegin('columns', TType.LIST, 4)
       oprot.writeListBegin(TType.STRING, len(self.columns))
-      for iter164 in self.columns:
-        oprot.writeString(iter164)
+      for iter171 in self.columns:
+        oprot.writeString(iter171)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.timestamp != None:
@@ -6977,11 +7209,11 @@ class scannerGet_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype168, _size165) = iprot.readListBegin()
-          for _i169 in xrange(_size165):
-            _elem170 = TRowResult()
-            _elem170.read(iprot)
-            self.success.append(_elem170)
+          (_etype175, _size172) = iprot.readListBegin()
+          for _i176 in xrange(_size172):
+            _elem177 = TRowResult()
+            _elem177.read(iprot)
+            self.success.append(_elem177)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -7010,8 +7242,8 @@ class scannerGet_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter171 in self.success:
-        iter171.write(oprot)
+      for iter178 in self.success:
+        iter178.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.io != None:
@@ -7135,11 +7367,11 @@ class scannerGetList_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype175, _size172) = iprot.readListBegin()
-          for _i176 in xrange(_size172):
-            _elem177 = TRowResult()
-            _elem177.read(iprot)
-            self.success.append(_elem177)
+          (_etype182, _size179) = iprot.readListBegin()
+          for _i183 in xrange(_size179):
+            _elem184 = TRowResult()
+            _elem184.read(iprot)
+            self.success.append(_elem184)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -7168,8 +7400,8 @@ class scannerGetList_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter178 in self.success:
-        iter178.write(oprot)
+      for iter185 in self.success:
+        iter185.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.io != None:

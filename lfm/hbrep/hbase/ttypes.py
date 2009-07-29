@@ -98,7 +98,6 @@ class ColumnDescriptor:
    - maxVersions
    - compression
    - inMemory
-   - maxValueLength
    - bloomFilterType
    - bloomFilterVectorSize
    - bloomFilterNbHashes
@@ -112,20 +111,18 @@ class ColumnDescriptor:
     (2, TType.I32, 'maxVersions', None, 3, ), # 2
     (3, TType.STRING, 'compression', None, "NONE", ), # 3
     (4, TType.BOOL, 'inMemory', None, False, ), # 4
-    (5, TType.I32, 'maxValueLength', None, 2147483647, ), # 5
-    (6, TType.STRING, 'bloomFilterType', None, "NONE", ), # 6
-    (7, TType.I32, 'bloomFilterVectorSize', None, 0, ), # 7
-    (8, TType.I32, 'bloomFilterNbHashes', None, 0, ), # 8
-    (9, TType.BOOL, 'blockCacheEnabled', None, False, ), # 9
-    (10, TType.I32, 'timeToLive', None, -1, ), # 10
+    (5, TType.STRING, 'bloomFilterType', None, "NONE", ), # 5
+    (6, TType.I32, 'bloomFilterVectorSize', None, 0, ), # 6
+    (7, TType.I32, 'bloomFilterNbHashes', None, 0, ), # 7
+    (8, TType.BOOL, 'blockCacheEnabled', None, False, ), # 8
+    (9, TType.I32, 'timeToLive', None, -1, ), # 9
   )
 
-  def __init__(self, name=None, maxVersions=thrift_spec[2][4], compression=thrift_spec[3][4], inMemory=thrift_spec[4][4], maxValueLength=thrift_spec[5][4], bloomFilterType=thrift_spec[6][4], bloomFilterVectorSize=thrift_spec[7][4], bloomFilterNbHashes=thrift_spec[8][4], blockCacheEnabled=thrift_spec[9][4], timeToLive=thrift_spec[10][4],):
+  def __init__(self, name=None, maxVersions=thrift_spec[2][4], compression=thrift_spec[3][4], inMemory=thrift_spec[4][4], bloomFilterType=thrift_spec[5][4], bloomFilterVectorSize=thrift_spec[6][4], bloomFilterNbHashes=thrift_spec[7][4], blockCacheEnabled=thrift_spec[8][4], timeToLive=thrift_spec[9][4],):
     self.name = name
     self.maxVersions = maxVersions
     self.compression = compression
     self.inMemory = inMemory
-    self.maxValueLength = maxValueLength
     self.bloomFilterType = bloomFilterType
     self.bloomFilterVectorSize = bloomFilterVectorSize
     self.bloomFilterNbHashes = bloomFilterNbHashes
@@ -162,31 +159,26 @@ class ColumnDescriptor:
         else:
           iprot.skip(ftype)
       elif fid == 5:
-        if ftype == TType.I32:
-          self.maxValueLength = iprot.readI32();
-        else:
-          iprot.skip(ftype)
-      elif fid == 6:
         if ftype == TType.STRING:
           self.bloomFilterType = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 7:
+      elif fid == 6:
         if ftype == TType.I32:
           self.bloomFilterVectorSize = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 8:
+      elif fid == 7:
         if ftype == TType.I32:
           self.bloomFilterNbHashes = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 9:
+      elif fid == 8:
         if ftype == TType.BOOL:
           self.blockCacheEnabled = iprot.readBool();
         else:
           iprot.skip(ftype)
-      elif fid == 10:
+      elif fid == 9:
         if ftype == TType.I32:
           self.timeToLive = iprot.readI32();
         else:
@@ -217,28 +209,24 @@ class ColumnDescriptor:
       oprot.writeFieldBegin('inMemory', TType.BOOL, 4)
       oprot.writeBool(self.inMemory)
       oprot.writeFieldEnd()
-    if self.maxValueLength != None:
-      oprot.writeFieldBegin('maxValueLength', TType.I32, 5)
-      oprot.writeI32(self.maxValueLength)
-      oprot.writeFieldEnd()
     if self.bloomFilterType != None:
-      oprot.writeFieldBegin('bloomFilterType', TType.STRING, 6)
+      oprot.writeFieldBegin('bloomFilterType', TType.STRING, 5)
       oprot.writeString(self.bloomFilterType)
       oprot.writeFieldEnd()
     if self.bloomFilterVectorSize != None:
-      oprot.writeFieldBegin('bloomFilterVectorSize', TType.I32, 7)
+      oprot.writeFieldBegin('bloomFilterVectorSize', TType.I32, 6)
       oprot.writeI32(self.bloomFilterVectorSize)
       oprot.writeFieldEnd()
     if self.bloomFilterNbHashes != None:
-      oprot.writeFieldBegin('bloomFilterNbHashes', TType.I32, 8)
+      oprot.writeFieldBegin('bloomFilterNbHashes', TType.I32, 7)
       oprot.writeI32(self.bloomFilterNbHashes)
       oprot.writeFieldEnd()
     if self.blockCacheEnabled != None:
-      oprot.writeFieldBegin('blockCacheEnabled', TType.BOOL, 9)
+      oprot.writeFieldBegin('blockCacheEnabled', TType.BOOL, 8)
       oprot.writeBool(self.blockCacheEnabled)
       oprot.writeFieldEnd()
     if self.timeToLive != None:
-      oprot.writeFieldBegin('timeToLive', TType.I32, 10)
+      oprot.writeFieldBegin('timeToLive', TType.I32, 9)
       oprot.writeI32(self.timeToLive)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

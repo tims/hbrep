@@ -49,6 +49,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void deleteAllRowTs(Text tableName, Text row, i64 timestamp)'
   print '  ScannerID scannerOpen(Text tableName, Text startRow,  columns)'
   print '  ScannerID scannerOpenWithStop(Text tableName, Text startRow, Text stopRow,  columns)'
+  print '  ScannerID scannerOpenWithPrefix(Text tableName, Text startAndPrefix,  columns)'
   print '  ScannerID scannerOpenTs(Text tableName, Text startRow,  columns, i64 timestamp)'
   print '  ScannerID scannerOpenWithStopTs(Text tableName, Text startRow, Text stopRow,  columns, i64 timestamp)'
   print '   scannerGet(ScannerID id)'
@@ -269,6 +270,12 @@ elif cmd == 'scannerOpenWithStop':
     print 'scannerOpenWithStop requires 4 args'
     sys.exit(1)
   pp.pprint(client.scannerOpenWithStop(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),))
+
+elif cmd == 'scannerOpenWithPrefix':
+  if len(args) != 3:
+    print 'scannerOpenWithPrefix requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.scannerOpenWithPrefix(eval(args[0]),eval(args[1]),eval(args[2]),))
 
 elif cmd == 'scannerOpenTs':
   if len(args) != 4:
